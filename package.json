@@ -1,0 +1,26 @@
+{
+    "name": "@node-nodejs/application",
+    "main": "index.js",
+    "type": "module",
+    "version": "1.0.0",
+    "description": "This repository is the part of nodejs-assignments https://github.com/AlreadyBored/nodejs-assignments",
+    "exports": {
+      ".": {
+        "import": "./app.js",
+        "require": "./app.js"
+      },
+      "./*": {
+        "import": "./*/index.js",
+        "require": "./*/index.js"
+      }
+    },
+    "engines": {
+      "node": ">=20.0.0"
+    },
+    "scripts": {
+      "start": "node app.js"
+    },
+    "author": "ant0x64",
+    "license": "ISC"
+  }
+  
