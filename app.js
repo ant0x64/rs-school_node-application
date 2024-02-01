@@ -1,5 +1,3 @@
-'use strict';
-
 import Cli from "./src/cli/index.js";
 import fileManager from "./src/file-manager/index.js";
 
@@ -67,8 +65,8 @@ process.stdin.on('data', async (data) => {
             },
             'ls': async () => {
                 const list = await fileManager.ls();
-                processManager.message(`\x1b[45mTotal Dirs: ${list.dirs.length}`);
-                processManager.message(`\x1b[45mTotal Files: ${list.files.length}`);
+                processManager.message(`\x1b[45mTotal Dir[s]: ${list.dirs.length}`);
+                processManager.message(`\x1b[45mTotal File[s]: ${list.files.length}`);
                 list.dirs.map(dir_name => {
                     processManager.message('\x1b[1m\x1b[100m' + dir_name);
                 });
@@ -76,17 +74,29 @@ process.stdin.on('data', async (data) => {
                     processManager.message('\x1b[37m' + file_name);
                 });
             },
-            'cat': null,
-            'add': null,
+            'cat': async (path) => {
+                return await fileManager.cat(path, process.stdout);
+            },
+            'add': async (name) => {
+                await fileManager.add(name);
+                processManager.success();
+            },
             'rn': async (path, new_path) => {
                 await fileManager.rn(path, new_path); 
-                processManager.success('File ')
+                processManager.success();
             },
             'rm': async (path) => {
-                return fileManager.rm(path);
+                await fileManager.rm(path);
+                processManager.success();
             },
-            'cp': null,
-            'mv': null,
+            'cp': async (file_path, destination_dir) => {
+                await fileManager.cp(file_path, destination_dir);
+                processManager.success();
+            },
+            'mv': async (file_path, destination_dir) => {
+                await fileManager.mv(file_path, destination_dir);
+                processManager.success();
+            },
             'os': null,
             'hash': null,
             'compress': null,

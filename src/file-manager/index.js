@@ -1,11 +1,12 @@
-'use stric';
-
 import { homedir } from 'node:os';
-import { opendir, rename, unlink } from 'node:fs/promises';
-import {} from 'stream/promises';
-import { join } from 'path';
+import { opendir, rename, unlink, stat } from 'node:fs/promises';
+import { join, basename } from 'node:path';
 
-import { Dir, Dirent } from 'node:fs'; // eslint-disable-line no-unused-vars
+import { createReadStream, createWriteStream } from 'node:fs';
+import { pipeline, finished } from 'node:stream/promises';
+
+import { Stats } from 'node:fs'; // eslint-disable-line no-unused-vars
+import { Writable } from 'node:stream'; // eslint-disable-line no-unused-vars
 
 class FileManager {
     /**
@@ -80,7 +81,6 @@ class FileManager {
      * Rename file (content should remain unchanged)
      * @param {string} path 
      * @param {string} new_path 
-     * @async
      * @returns {Promise<void>}
      */
     async rn(path, new_path) {
@@ -93,37 +93,111 @@ class FileManager {
     /**
      * Delete file
      * @param {string} path 
+     * @return {Promise<string>}
      */
-    rm(path) {
+    async rm(path) {
         return unlink(this.getAbsolutePath(path));
     }
 
     /**
      * Copy file (should be done using Readable and Writable streams)
-     * @param {string} path 
-     * @param {string} new_path 
+     * @param {string} source 
+     * @param {string} destination 
      */
-    async cp(path, new_path) {}
+    async cp(source, destination) {
+        const source_path = this.getAbsolutePath(source);
+        let   destination_path = this.getAbsolutePath(destination);
+
+        // check if destination is dir
+        await stat(destination_path).then(
+            /**
+             * @param {Stats} stat 
+             */
+            (stat) => {
+                if(stat.isFile()) {
+                    throw new Error('Destination file exists');
+                } else if (stat.isDirectory()) {
+                    destination_path = join(destination_path, basename(source_path));
+                }
+            }, () => {}
+        );
+
+        return stat(source_path).then(
+            async (stat) => {
+                /**
+                * @param {Stats} stat 
+                */
+                if(stat.isDirectory()) {
+                    throw new Error('The source path is directory. Should be a file')
+                }
+                await this.add(destination_path);
+            
+                const readStream = createReadStream(source_path);
+                const writeStream = createWriteStream(destination_path);
+                await pipeline(readStream, writeStream);
+            }, () => {
+                throw new Error('Source file doesn\'t exist');
+            }
+        );
+    }
 
     /**
      * Move file (same as copy but initial file is deleted, copying part should be done using Readable and Writable streams)
-     * @param {string} path
-     * @param {string} new_path 
+     * @param {string} source
+     * @param {string} destination 
      */
-    async mv(path, new_path) {}
+    async mv(source, destination) {
+        await this.cp(source, destination);
+        return this.rm(source);
+    }
 
     /**
      * Read file and print it's content in console (should be done using Readable stream)
      * @param {string} path 
+     * @param {Writable} output 
      */
-    async cat(path) {}
+    async cat(path, output) {
+        const absolute_path = this.getAbsolutePath(path);
+
+        await stat(absolute_path).then(
+            /**
+             * 
+             * @param {Stats} stats 
+             */
+            (stat) => {
+                if(stat.isDirectory()) {
+                    throw new Error('There\'s the category by the path');
+                }
+            }
+        );
+
+        return pipeline(createReadStream(absolute_path), output);
+    }
     
     /**
      * Create empty file in current working directory
-     * @param {string} path 
+     * @param {string} name 
+     * @return {Promise<void>}
      */
-    async add(path) {
+    async add(name) {
+        const path = this.getAbsolutePath(name);
 
+        return stat(path).then(
+            /**
+             * 
+             * @param {Stats} stats 
+             */
+            (stat) => {
+                if(stat.isDirectory()) {
+                    throw new Error('There\'s the category with the same name');
+                } else {
+                    throw new Error('File exists');
+                }
+            }, async () => {
+                const stream = createWriteStream(path);
+                await finished(stream).finally(stream.close()); 
+            }
+        );
     }
 }
 
