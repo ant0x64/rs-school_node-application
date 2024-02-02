@@ -57,7 +57,6 @@ process.stdin.on('data', async (data) => {
     const {0: command, ...args} = Cli.parse(commmand.split(/\s+/));
 
     const commandsMap = {
-
         list: {
             async 'up' () {
                 return fileManager.up();
@@ -77,7 +76,7 @@ process.stdin.on('data', async (data) => {
                 });
             },
             async 'cat' (path) {
-                return await fileManager.cat(path, process.stdout);
+                await fileManager.cat(path, process.stdout);
             },
             async 'add' (name) {
                 await fileManager.add(name);
@@ -131,9 +130,17 @@ process.stdin.on('data', async (data) => {
                     this.throwArgumentsError();
                 }
             },
-            'hash': null,
-            'compress': null,
-            'decompress': null,
+            async 'hash'(path) { 
+                processManager.message(`Hash: \x1b[1m${(await fileManager.hash(path))}`, 'result');
+            },
+            async 'compress'(source, destination) {
+                await fileManager.compress(source, destination);
+                processManager.success();
+            },
+            async 'decompress'(source, destination) {
+                await fileManager.decompress(source, destination);
+                processManager.success();
+            },
         },
 
         throwArgumentsError(argumentsNeed) {

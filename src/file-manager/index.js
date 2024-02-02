@@ -5,6 +5,10 @@ import { join, basename } from 'node:path';
 import { createReadStream, createWriteStream } from 'node:fs';
 import { pipeline, finished } from 'node:stream/promises';
 
+import { createHash } from 'node:crypto';
+
+import { createGzip, createGunzip } from 'node:zlib';
+
 import { Stats } from 'node:fs'; // eslint-disable-line no-unused-vars
 import { Writable } from 'node:stream'; // eslint-disable-line no-unused-vars
 
@@ -115,7 +119,7 @@ class FileManager {
              */
             (stat) => {
                 if(stat.isFile()) {
-                    throw new Error('Destination file exists');
+                    throw new Error('The destination file exists');
                 } else if (stat.isDirectory()) {
                     destination_path = join(destination_path, basename(source_path));
                 }
@@ -128,7 +132,7 @@ class FileManager {
                 * @param {Stats} stat 
                 */
                 if(stat.isDirectory()) {
-                    throw new Error('The source path is directory. Should be a file')
+                    throw new Error('The source path can\'t be a directory')
                 }
                 await this.add(destination_path);
             
@@ -136,7 +140,7 @@ class FileManager {
                 const writeStream = createWriteStream(destination_path);
                 await pipeline(readStream, writeStream);
             }, () => {
-                throw new Error('Source file doesn\'t exist');
+                throw new Error('The source file doesn\'t exist');
             }
         );
     }
@@ -155,6 +159,7 @@ class FileManager {
      * Read file and print it's content in console (should be done using Readable stream)
      * @param {string} path 
      * @param {Writable} output 
+     * @returns {Promise<null>}
      */
     async cat(path, output) {
         const absolute_path = this.getAbsolutePath(path);
@@ -171,7 +176,9 @@ class FileManager {
             }
         );
 
-        return pipeline(createReadStream(absolute_path), output);
+        return pipeline(createReadStream(absolute_path), output, {
+            end: false
+        });
     }
     
     /**
@@ -196,6 +203,93 @@ class FileManager {
             }, async () => {
                 const stream = createWriteStream(path);
                 await finished(stream).finally(stream.close()); 
+            }
+        );
+    }
+
+    /**
+     * @param {string} path 
+     * @returns {string}
+     */
+    async hash(path) {
+        const absolute_path = this.getAbsolutePath(path);
+        const hash = createHash('SHA256');
+        
+        await pipeline(createReadStream(absolute_path), hash);
+
+        return hash.digest('hex');
+    }
+
+    /**
+     * @param {string} source 
+     * @param {string} destination 
+     * @returns {Promise<null>}
+     */
+    async compress(source, destination) {
+        const source_path = this.getAbsolutePath(source);
+        const destination_path = this.getAbsolutePath(destination);
+
+        await stat(destination_path).then(
+            /**
+             * @param {Stats} stat 
+             */
+            (stat) => {
+                if(stat.isFile()) {
+                    throw new Error('The destination file exists');
+                } else if (stat.isDirectory()) {
+                    throw new Error('The destination path can\'t be a directory');
+                }
+            }, () => {}
+        );
+
+        return stat(source_path).then(
+            async (stat) => {
+                /**
+                * @param {Stats} stat 
+                */
+                if(stat.isDirectory()) {
+                    throw new Error('The source path can\'t be a directory')
+                }
+                await pipeline(createReadStream(source_path), createGzip(), createWriteStream(destination_path));
+            }, () => {
+                throw new Error('The source file doesn\'t exist');
+            }
+        );
+    }
+
+    async decompress(source, destination) {
+        const source_path = this.getAbsolutePath(source);
+        const destination_path = this.getAbsolutePath(destination);
+
+        await stat(destination_path).then(
+            /**
+             * @param {Stats} stat 
+             */
+            (stat) => {
+                if(stat.isFile()) {
+                    throw new Error('The destination file exists');
+                } else if (stat.isDirectory()) {
+                    throw new Error('The destination path can\'t be a directory');
+                }
+            }, () => {}
+        );
+
+        return stat(source_path).then(
+            async (stat) => {
+                /**
+                * @param {Stats} stat 
+                */
+                if(stat.isDirectory()) {
+                    throw new Error('The source path can\'t be a directory')
+                }
+                await pipeline(createReadStream(source_path), createGunzip(), createWriteStream(destination_path)).catch((err) => {
+                    if(err) {
+                        this.rm(destination_path);
+                        throw err;
+                    }
+                });
+            }, () => {
+                throw new Error('The source file doesn\'t exist');
             }
         );
     }
