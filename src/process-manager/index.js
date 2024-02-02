@@ -44,4 +44,7 @@ export default class ProcessManager {
     showCurrentPath = (path) => {
         this.message(`${EOL}You are currently in \x1b[1m${path}`);
     }
+    showPrompt = () => {
+        process.stdout.write('\x1b[1m\x1b[92m> \x1b[0m');
+    }
 }

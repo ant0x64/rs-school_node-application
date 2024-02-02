@@ -11,6 +11,7 @@ const processManager = new ProcessManager(username);
 
 processManager.welcome();
 processManager.showCurrentPath(fileManager.getCurrentPath());
+processManager.showPrompt();
 
 class CommandsMap {
     
@@ -162,7 +163,7 @@ process.stdin.on('data', async (data) => {
         processManager.message(err.message, 'error');
     }
     processManager.showCurrentPath(fileManager.getCurrentPath());
-
+    processManager.showPrompt();
 });
 
 process.on('SIGINT', () => {
