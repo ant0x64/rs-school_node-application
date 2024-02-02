@@ -1,10 +1,23 @@
 export default class Cli {
+
+    /**
+     * @param {[]} argv 
+     * @returns {{key: <string>, value: <string>|null}}
+     */
     static parse(argv = []) {
-        const paramsArray = {};
+        return argv.filter(el => !el.startsWith('--'));
+    }
+
+    /**
+     * 
+     * @param {[string]} argv 
+     * @returns {{<string>:<string>|<boolean>}}
+     */
+    static parseParams(argv = []) {
+        const result = {};
     
         for(let i = 0; i < argv.length; i++) {
             if(!argv[i].startsWith('--')) {
-                paramsArray[i] = argv[i];
                 continue;
             }
 
@@ -14,13 +27,13 @@ export default class Cli {
                     arg_value = argv[i + 1];
                     i++;
                 } else {
-                    arg_value = arg_name;
+                    arg_value = true;
                 }
             }
             
-            paramsArray[arg_name.slice(2)] = arg_value;
+            result[arg_name.substring(2)] = arg_value;
         }
 
-        return paramsArray;
-    } 
+        return result;
+    }
 }
