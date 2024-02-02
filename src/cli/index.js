@@ -1,5 +1,3 @@
-'use strict';
-
 export default class Cli {
     static parse(argv = []) {
         const paramsArray = {};
@@ -16,7 +14,7 @@ export default class Cli {
                     arg_value = argv[i + 1];
                     i++;
                 } else {
-                    arg_value = true;
+                    arg_value = arg_name;
                 }
             }
             

@@ -1,4 +1,5 @@
 import Cli from "./src/cli/index.js";
+import OS from "./src/os/index.js";
 import fileManager from "./src/file-manager/index.js";
 
 import process from 'node:process';
@@ -17,7 +18,8 @@ class ProcessManager {
             default: 34,
             error: 91,
             success: 92,
-            warning: 43
+            warning: 43,
+            result: 45
         }
     }
     message = (message, type) => {
@@ -57,13 +59,13 @@ process.stdin.on('data', async (data) => {
     const commandsMap = {
 
         list: {
-            'up': async () => {
+            async 'up' () {
                 return fileManager.up();
             },
-            'cd': async (path) => {
+            async 'cd' (path) {
                 return fileManager.cd(path);
             },
-            'ls': async () => {
+            async 'ls' () {
                 const list = await fileManager.ls();
                 processManager.message(`\x1b[45mTotal Dir[s]: ${list.dirs.length}`);
                 processManager.message(`\x1b[45mTotal File[s]: ${list.files.length}`);
@@ -74,39 +76,79 @@ process.stdin.on('data', async (data) => {
                     processManager.message('\x1b[37m' + file_name);
                 });
             },
-            'cat': async (path) => {
+            async 'cat' (path) {
                 return await fileManager.cat(path, process.stdout);
             },
-            'add': async (name) => {
+            async 'add' (name) {
                 await fileManager.add(name);
                 processManager.success();
             },
-            'rn': async (path, new_path) => {
+            async 'rn' (path, new_path) {
                 await fileManager.rn(path, new_path); 
                 processManager.success();
             },
-            'rm': async (path) => {
+            async 'rm' (path) {
                 await fileManager.rm(path);
                 processManager.success();
             },
-            'cp': async (file_path, destination_dir) => {
+            async 'cp' (file_path, destination_dir) {
                 await fileManager.cp(file_path, destination_dir);
                 processManager.success();
             },
-            'mv': async (file_path, destination_dir) => {
+            async 'mv' (file_path, destination_dir) {
                 await fileManager.mv(file_path, destination_dir);
                 processManager.success();
             },
-            'os': null,
+            'os' (param) {
+                
+                switch(param) {
+
+                case '--EOL':
+                    processManager.message(`EOL is equel to: \x1b[1m${OS.getEOL()}`, 'result');
+                    break;
+                case '--cpus' : {
+                    const cpus = OS.getCpus();
+                    if(!cpus) {
+                        return this.throwInputOutput();
+                    }
+                    processManager.message(`Overall amount of CPUS: \x1b[1m${cpus.length}`, 'result');
+                    processManager.message(`Model: \x1b[1m${cpus[0].model}`, 'result');
+                    cpus.map((cpu, index) => {
+                        processManager.message(`CPU ${(index + 1)} clock rate is: \x1b[1m${cpu.clock}GHz`, 'result');
+                    });
+                    break;
+                } 
+                case '--homedir':
+                    processManager.message(`Your home dir is: \x1b[1m${OS.getHomedir()}`, 'result');
+                    break;
+                case '--username':
+                    processManager.message(`Username is: \x1b[1m${OS.getUsername()}`, 'result');
+                    break;
+                case '--architecture':
+                    processManager.message(`Architecture is: \x1b[1m${OS.getArchitecture()}`, 'result');
+                    break;
+                default :
+                    this.throwArgumentsError();
+                }
+            },
             'hash': null,
             'compress': null,
             'decompress': null,
         },
 
-        throwArgumentsError() {
-            throw new Error('Incorrect arguments');
+        throwArgumentsError(argumentsNeed) {
+            if(argumentsNeed > 0) {
+                throw new Error(`Number of arguments required: ${argumentsNeed}`, 'warning');
+            } else if (argumentsNeed === 0) {
+                throw new Error('Operation doesn\'t have arguments', 'warning');
+            } else {
+                throw new Error('Incorrect arguments');
+            }
         },
         throwInputError() {
+            throw new Error('Invalid input');
+        },
+        throwInputOutput() {
             throw new Error('Invalid input');
         },
 
@@ -117,14 +159,9 @@ process.stdin.on('data', async (data) => {
             if(!fn) {
                 this.throwInputError();
             } else if (fn.length !== params.length) {
-                if(!fn.length) {
-                    processManager.message('Operation doesn\'t have arguments', 'warning');
-                } else {
-                    processManager.message(`Number of arguments required: ${fn.length}`, 'warning');
-                }
-                this.throwArgumentsError();
+                this.throwArgumentsError(fn.length);
             }
-            await fn(...params);
+            await fn.bind(this)(...params);
         }
     };
 
