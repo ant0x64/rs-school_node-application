@@ -1,10 +1,10 @@
 export default class Cli {
-
+    
     /**
      * @param {[]} argv 
      * @returns {{key: <string>, value: <string>|null}}
      */
-    static parse(argv = []) {
+    static parseArgv(argv = []) {
         return argv.filter(el => !el.startsWith('--'));
     }
 

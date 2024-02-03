@@ -39,8 +39,8 @@ class CommandsMap {
     }
     async _ls () {
         const list = await fileManager.ls();
-        processManager.message(`\x1b[45mTotal Dir[s]: ${list.dirs.length}`);
-        processManager.message(`\x1b[45mTotal File[s]: ${list.files.length}`);
+        processManager.message(`\x1b[35mTotal Dir[s]: ${list.dirs.length}`);
+        processManager.message(`\x1b[35mTotal File[s]: ${list.files.length}`);
         list.dirs.map(dir_name => {
             processManager.message('\x1b[1m\x1b[100m' + dir_name);
         });
@@ -144,8 +144,13 @@ class CommandsMap {
 const commandsMap = new CommandsMap;
 
 process.stdin.on('data', async (data) => {
-    const dataArray = data.toString().trim().split(/\s+/);
-    const [command, ...args] = Cli.parse(dataArray);
+
+    const space_replacer = '\\xa0';
+    const dataArray = data.toString().trim().replace(/(['"])[^'"]*(['"])/g, (match) => {
+        return match.replace(/['"]+/g, '').trim().replace(/\s/g, space_replacer);
+    }).split(/\s+/).map(value => value.replace(space_replacer, ' '));
+
+    const [command, ...args] = Cli.parseArgv(dataArray);
     const params = Cli.parseParams(dataArray);
 
     if(!command) {
@@ -159,8 +164,8 @@ process.stdin.on('data', async (data) => {
     try {
         await commandsMap.run(command, args, params);
     } catch(err) {
-        /** @todo */
         processManager.message(err.message, 'error');
+        processManager.error();
     }
     processManager.showCurrentPath(fileManager.getCurrentPath());
     processManager.showPrompt();

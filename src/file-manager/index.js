@@ -1,6 +1,6 @@
 import { homedir } from 'node:os';
 import { opendir, rename, unlink, stat } from 'node:fs/promises';
-import { join, basename } from 'node:path';
+import { join, basename, isAbsolute, normalize } from 'node:path';
 
 import { createReadStream, createWriteStream } from 'node:fs';
 import { pipeline, finished } from 'node:stream/promises';
@@ -33,10 +33,10 @@ class FileManager {
      * @returns string
      */
     getAbsolutePath(path) {
-        if(!path.startsWith('/')) {
+        if(!isAbsolute(path)) {
             path = join(this._currentDir, path);
         }
-        return path;
+        return normalize(path);
     }
     
     /**

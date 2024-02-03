@@ -38,9 +38,6 @@ export default class ProcessManager {
     error = () => {
         this.message('Operation failed', 'error')
     }
-    invalidInput = () => {
-        this.message('Invalid input', 'error');
-    }
     showCurrentPath = (path) => {
         this.message(`${EOL}You are currently in \x1b[1m${path}`);
     }
