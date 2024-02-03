@@ -112,7 +112,7 @@ class CommandsMap {
         }
     }
     async _hash(path) { 
-        processManager.message(`Hash: \x1b[1m${(fileManager.hash(path))}`, 'result');
+        processManager.message(`Hash: \x1b[1m${(await fileManager.hash(path))}`, 'result');
     }
     async _compress(source, destination) {
         await fileManager.compress(source, destination);
@@ -146,14 +146,19 @@ const commandsMap = new CommandsMap;
 process.stdin.on('data', async (data) => {
 
     const space_replacer = '\\xa0';
-    const dataArray = data.toString().trim().replace(/(['"])[^'"]*(['"])/g, (match) => {
-        return match.replace(/['"]+/g, '').trim().replace(/\s/g, space_replacer);
-    }).split(/\s+/).map(value => value.replace(space_replacer, ' '));
+    const dataArray = data.toString().trim()
+        .replace(/\\\s/, space_replacer)
+        .replace(/(['"])[^'"]*(['"])/g, (match) => {
+            return match.replace(/['"]+/g, '').replace(/\s/g, space_replacer);
+        })
+        .split(/\s+/).map(value => value.replace(space_replacer, ' '));
 
     const [command, ...args] = Cli.parseArgv(dataArray);
     const params = Cli.parseParams(dataArray);
 
     if(!command) {
+        processManager.showCurrentPath(fileManager.getCurrentPath());
+        processManager.showPrompt();
         return;
     }
 
