@@ -53,7 +53,7 @@ class FileManager {
     /**
      * Go upper from current directory (when you are in the root folder this operation shouldn't change working directory)
      */
-    up() {
+    async up() {
         return this.cd('..');
     }
 
@@ -63,8 +63,7 @@ class FileManager {
      *  - folders and files are sorted in alphabetical order ascending, but list of folders goes first;
      *  - type of directory content should be marked explicitly (e.g. as a corresponding column value).
      * 
-     * @async
-     * @returns {Promise<{files:[],dirs:[]}>}
+     * @returns {{files:[],dirs:[]}}
      */
     async ls() {
         const filesList = [];
@@ -108,7 +107,7 @@ class FileManager {
     /**
      * Delete file
      * @param {string} path 
-     * @return {Promise<string>}
+     * @return {Promise<void>}
      */
     async rm(path) {
         return unlink(this.getAbsolutePath(path));
@@ -136,7 +135,7 @@ class FileManager {
             }, () => {}
         );
 
-        return stat(source_path).then(
+        await stat(source_path).then(
             async (stat) => {
                 /**
                 * @param {Stats} stat 
@@ -169,7 +168,6 @@ class FileManager {
      * Read file and print it's content in console (should be done using Readable stream)
      * @param {string} path 
      * @param {Writable} output 
-     * @returns {Promise<null>}
      */
     async cat(path, output) {
         const absolute_path = this.getAbsolutePath(path);
@@ -186,7 +184,7 @@ class FileManager {
             }
         );
 
-        return pipeline(createReadStream(absolute_path), output, {
+        await pipeline(createReadStream(absolute_path), output, {
             end: false
         });
     }
@@ -194,12 +192,11 @@ class FileManager {
     /**
      * Create empty file in current working directory
      * @param {string} name 
-     * @return {Promise<void>}
      */
     async add(name) {
         const path = this.getAbsolutePath(name);
 
-        return stat(path).then(
+        await stat(path).then(
             /**
              * 
              * @param {Stats} stats 
@@ -233,7 +230,6 @@ class FileManager {
     /**
      * @param {string} source 
      * @param {string} destination 
-     * @returns {Promise<null>}
      */
     async compress(source, destination) {
         const source_path = this.getAbsolutePath(source);
@@ -252,7 +248,7 @@ class FileManager {
             }, () => {}
         );
 
-        return stat(source_path).then(
+        await stat(source_path).then(
             async (stat) => {
                 /**
                 * @param {Stats} stat 
@@ -267,6 +263,10 @@ class FileManager {
         );
     }
 
+    /**
+     * @param {string} source 
+     * @param {string} destination 
+     */
     async decompress(source, destination) {
         const source_path = this.getAbsolutePath(source);
         const destination_path = this.getAbsolutePath(destination);
@@ -284,7 +284,7 @@ class FileManager {
             }, () => {}
         );
 
-        return stat(source_path).then(
+        await stat(source_path).then(
             async (stat) => {
                 /**
                 * @param {Stats} stat 

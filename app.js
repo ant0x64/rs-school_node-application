@@ -17,9 +17,9 @@ class CommandsMap {
     
     static throwArgumentsError(argumentsNeed) {
         if(argumentsNeed > 0) {
-            throw new Error(`Number of arguments required: ${argumentsNeed}`, 'warning');
+            throw new Error(`Number of arguments required: ${argumentsNeed}`);
         } else if (argumentsNeed === 0) {
-            throw new Error('Operation doesn\'t have arguments', 'warning');
+            throw new Error('Operation doesn\'t have arguments');
         } else {
             throw new Error('Incorrect arguments');
         }
@@ -32,15 +32,15 @@ class CommandsMap {
     }
 
     async _up () {
-        return fileManager.up();
+        await fileManager.up();
     }
     async _cd (path) {
-        return fileManager.cd(path);
+        await fileManager.cd(path);
     }
     async _ls () {
         const list = await fileManager.ls();
-        processManager.message(`\x1b[35mTotal Dir[s]: ${list.dirs.length}`);
-        processManager.message(`\x1b[35mTotal File[s]: ${list.files.length}`);
+        processManager.message(`\x1b[1m\x1b[35mTotal Directories: ${list.dirs.length}`);
+        processManager.message(`\x1b[1m\x1b[35mTotal Files: ${list.files.length}`);
         list.dirs.map(dir_name => {
             processManager.message('\x1b[1m\x1b[100m' + dir_name);
         });
