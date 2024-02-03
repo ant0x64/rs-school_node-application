@@ -88,9 +88,20 @@ class FileManager {
      * @returns {Promise<void>}
      */
     async rn(path, new_path) {
+        const destination_path = this.getAbsolutePath(new_path);
+
+        await stat(destination_path).then(
+            /**
+             * @param {Stats} stat 
+             */
+            () => {
+                throw new Error('The destination file exists');
+            }, () => {}
+        );
+
         return rename(
             this.getAbsolutePath(path),
-            this.getAbsolutePath(new_path)
+            destination_path
         );
     }
 
@@ -112,7 +123,6 @@ class FileManager {
         const source_path = this.getAbsolutePath(source);
         let   destination_path = this.getAbsolutePath(destination);
 
-        // check if destination is dir
         await stat(destination_path).then(
             /**
              * @param {Stats} stat 
@@ -209,7 +219,7 @@ class FileManager {
 
     /**
      * @param {string} path 
-     * @returns {string}
+     * @returns {Promise<string>}
      */
     async hash(path) {
         const absolute_path = this.getAbsolutePath(path);
