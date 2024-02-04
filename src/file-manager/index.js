@@ -5,8 +5,6 @@ import { join, basename, isAbsolute, normalize } from 'node:path';
 import { createReadStream, createWriteStream } from 'node:fs';
 import { pipeline, finished } from 'node:stream/promises';
 
-import { createHash } from 'node:crypto';
-
 import { createGzip, createGunzip } from 'node:zlib';
 
 import { Stats } from 'node:fs'; // eslint-disable-line no-unused-vars
@@ -212,19 +210,6 @@ class FileManager {
                 await finished(stream).finally(stream.close()); 
             }
         );
-    }
-
-    /**
-     * @param {string} path 
-     * @returns {Promise<string>}
-     */
-    async hash(path) {
-        const absolute_path = this.getAbsolutePath(path);
-        const hash = createHash('SHA256');
-        
-        await pipeline(createReadStream(absolute_path), hash);
-
-        return hash.digest('hex');
     }
 
     /**

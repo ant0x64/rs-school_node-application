@@ -1,6 +1,8 @@
 import Cli from "./src/cli/index.js";
 import ProcessManager from "./src/process-manager/index.js";
 import OS from "./src/os/index.js";
+import Hash from "./src/hash/index.js";
+
 import fileManager from "./src/file-manager/index.js";
 
 import process from 'node:process';
@@ -112,7 +114,9 @@ class CommandsMap {
         }
     }
     async _hash(path) { 
-        processManager.message(`Hash: \x1b[1m${(await fileManager.hash(path))}`, 'result');
+        processManager.message(`Hash: \x1b[1m${(await Hash.create(
+            fileManager.getAbsolutePath(path)
+        ))}`, 'result');
     }
     async _compress(source, destination) {
         await fileManager.compress(source, destination);
