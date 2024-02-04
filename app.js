@@ -1,159 +1,22 @@
 import Cli from "./src/cli/index.js";
 import ProcessManager from "./src/process-manager/index.js";
-import OS from "./src/os/index.js";
-import Hash from "./src/hash/index.js";
-import Compressor from "./src/compressor/index.js";
-
-import fileManager from "./src/file-manager/index.js";
+import CommandsMap from "./src/commands-map/index.js";
 
 import process from 'node:process';
+import { homedir } from "node:os";
 
+process.chdir(homedir());
 
 const { username } = Cli.parseParams(process.argv.slice(2));
 const processManager = new ProcessManager(username);
 
 processManager.welcome();
-processManager.showCurrentPath(fileManager.getCurrentPath());
+processManager.showCurrentPath();
 processManager.showPrompt();
 
-class CommandsMap {
-    
-    static throwArgumentsError(argumentsNeed) {
-        if(argumentsNeed > 0) {
-            throw new Error(`Number of arguments required: ${argumentsNeed}`);
-        } else if (argumentsNeed === 0) {
-            throw new Error('Operation doesn\'t have arguments');
-        } else {
-            throw new Error('Incorrect arguments');
-        }
-    }
-    static throwInputError() {
-        throw new Error('Invalid input');
-    }
-    static throwInvalidOutput() {
-        throw new Error('Invalid output');
-    }
+const commandsMap = new CommandsMap();
 
-    async _up () {
-        await fileManager.up();
-    }
-    async _cd (path) {
-        await fileManager.cd(path);
-    }
-    async _ls () {
-        const list = await fileManager.ls();
-        processManager.message(`\x1b[1m\x1b[35mTotal Directories: ${list.dirs.length}`);
-        processManager.message(`\x1b[1m\x1b[35mTotal Files: ${list.files.length}`);
-        list.dirs.map(dir_name => {
-            processManager.message('\x1b[1m\x1b[100m' + dir_name);
-        });
-        list.files.map(file_name => {
-            processManager.message('\x1b[37m' + file_name);
-        });
-    }
-    async _cat (path) {
-        await fileManager.cat(path, process.stdout);
-    }
-    async _add (name) {
-        await fileManager.add(name);
-        processManager.success();
-    }
-    async _rn (path, new_path) {
-        await fileManager.rn(path, new_path); 
-        processManager.success();
-    }
-    async _rm (path) {
-        await fileManager.rm(path);
-        processManager.success();
-    }
-    async _cp (file_path, destination_dir) {
-        await fileManager.cp(file_path, destination_dir);
-        processManager.success();
-    }
-    async _mv (file_path, destination_dir) {
-        await fileManager.mv(file_path, destination_dir);
-        processManager.success();
-    }
-    _os (...args) {
-        if(!args[0] || !(args[0] instanceof Object)) {
-            return CommandsMap.throwInputError();
-        }
-
-        const params = Object.keys(args[0]);
-        if(params.length > 1) {
-            return CommandsMap.throwArgumentsError(1);
-        }
-        
-        switch(params[0]) {
-
-        case 'EOL':
-            processManager.message(`EOL is equel to: \x1b[1m${OS.getEOL()}`, 'result');
-            break;
-        case 'cpus' : {
-            const cpus = OS.getCpus();
-            if(!cpus) {
-                return CommandsMap.throwInvalidOutput();
-            }
-            processManager.message(`Overall amount of CPUS: \x1b[1m${cpus.length}`, 'result');
-            processManager.message(`Model: \x1b[1m${cpus[0].model}`, 'result');
-            cpus.map((cpu, index) => {
-                processManager.message(`CPU ${(index + 1)} clock rate is: \x1b[1m${cpu.clock}GHz`, 'result');
-            });
-            break;
-        } 
-        case 'homedir':
-            processManager.message(`Your home dir is: \x1b[1m${OS.getHomedir()}`, 'result');
-            break;
-        case 'username':
-            processManager.message(`Username is: \x1b[1m${OS.getUsername()}`, 'result');
-            break;
-        case 'architecture':
-            processManager.message(`Architecture is: \x1b[1m${OS.getArchitecture()}`, 'result');
-            break;
-        default :
-            CommandsMap.throwArgumentsError();
-        }
-    }
-    async _hash(path) { 
-        processManager.message(`Hash: \x1b[1m${(await Hash.create(
-            fileManager.getAbsolutePath(path)
-        ))}`, 'result');
-    }
-    async _compress(source, destination) {
-        await Compressor.compress(
-            fileManager.getAbsolutePath(source), 
-            fileManager.getAbsolutePath(destination)
-        );
-        processManager.success();
-    }
-    async _decompress(source, destination) {
-        await Compressor.decompress(
-            fileManager.getAbsolutePath(source), 
-            fileManager.getAbsolutePath(destination)
-        );
-        processManager.success();
-    }
-
-    /**
-     * @param {string} command 
-     * @param {[string]} args 
-     * @param {{:<string>}} params 
-     */
-    async run(command, args, params) {
-        const fn = this['_' + command];
-
-        if(!fn) {
-            CommandsMap.throwInputError();
-        } else if (fn.length !== args.length) {
-            CommandsMap.throwArgumentsError(fn.length);
-        }
-        fn.params = params;
-
-        await fn(...args, params);
-    }
-}
-const commandsMap = new CommandsMap;
-
+/** @todo implement it as pipeline with transform streams */
 process.stdin.on('data', async (data) => {
 
     const space_replacer = '\\xa0';
@@ -168,7 +31,7 @@ process.stdin.on('data', async (data) => {
     const params = Cli.parseParams(dataArray);
 
     if(!command) {
-        processManager.showCurrentPath(fileManager.getCurrentPath());
+        processManager.showCurrentPath();
         processManager.showPrompt();
         return;
     }
@@ -178,12 +41,17 @@ process.stdin.on('data', async (data) => {
     }
 
     try {
-        await commandsMap.run(command, args, params);
+        const result = await commandsMap.run(command, args, params);
+        if(result === true) {
+            processManager.success();
+        } else if (typeof result === 'string') {
+            processManager.message(result, 'result');
+        }
     } catch(err) {
         processManager.message(err.message, 'error');
         processManager.error();
     }
-    processManager.showCurrentPath(fileManager.getCurrentPath());
+    processManager.showCurrentPath();
     processManager.showPrompt();
 });
 

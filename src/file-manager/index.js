@@ -8,14 +8,14 @@ import { pipeline, finished } from 'node:stream/promises';
 import { Stats } from 'node:fs'; // eslint-disable-line no-unused-vars
 import { Writable } from 'node:stream'; // eslint-disable-line no-unused-vars
 
-class FileManager {
+export default class FileManager {
     /**
      * @type {string}
      */
     _currentDir = null;
 
     constructor() {
-        this._currentDir = homedir();
+        this._currentDir = process.cwd();
     }
 
     getHomeDir = homedir
@@ -43,6 +43,8 @@ class FileManager {
         const dir = await opendir(this.getAbsolutePath(path));
 
         this._currentDir = dir.path;
+        process.chdir(dir.path);
+        
         dir.close();
     }
 
@@ -59,7 +61,7 @@ class FileManager {
      *  - folders and files are sorted in alphabetical order ascending, but list of folders goes first;
      *  - type of directory content should be marked explicitly (e.g. as a corresponding column value).
      * 
-     * @returns {{files:[],dirs:[]}}
+     * @returns {Promise<{files:[],dirs:[]}>}
      */
     async ls() {
         const filesList = [];
@@ -210,6 +212,3 @@ class FileManager {
         );
     }
 }
-
-const fileManager = new FileManager;
-export default fileManager;

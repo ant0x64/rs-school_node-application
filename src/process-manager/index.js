@@ -1,5 +1,7 @@
 import { EOL } from "node:os";
+import process from "node:process";
 
+/** @todo implement it as writable or duplex streams */
 export default class ProcessManager {
 
     username = null;
@@ -21,8 +23,13 @@ export default class ProcessManager {
         this.username = typeof username == 'string' ? username : 'Noname';
     }
 
+    /**
+     * 
+     * @param {string} message 
+     * @param {string} type 
+     */
     message = (message, type) => {
-        process.stdout.write(`\x1b[${this.COLORS.text[type]??this.COLORS.text.default}m${message}\x1b[0m` + EOL);
+        process.stdout.write(`\x1b[${this.COLORS.text[type]??this.COLORS.text.default}m${message.trim()}\x1b[0m` + EOL);
     }
     welcome = () => {
         this.message(`Welcome to the File Manager, ${this.username}!`);
@@ -38,8 +45,8 @@ export default class ProcessManager {
     error = () => {
         this.message('Operation failed', 'error')
     }
-    showCurrentPath = (path) => {
-        this.message(`${EOL}You are currently in \x1b[1m${path}`);
+    showCurrentPath = () => {
+        this.message(`${EOL}You are currently in \x1b[1m${process.cwd()}`);
     }
     showPrompt = () => {
         process.stdout.write('\x1b[1m\x1b[92m> \x1b[0m');

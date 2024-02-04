@@ -6,7 +6,7 @@ export default class OS {
      * @returns {string}
      */
     static getEOL() {
-        return JSON.stringify(EOL.toString());
+        return EOL;
     } 
 
     /**
