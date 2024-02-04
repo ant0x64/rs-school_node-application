@@ -20,21 +20,22 @@ const commandsMap = new CommandsMap();
 process.stdin.on('data', async (data) => {
 
     const space_replacer = '\\xa0';
-    const dataArray = data.toString().trim()
+    const input = data.toString().trim();
+
+    if(!input) {
+        processManager.back();
+        return;
+    }
+
+    const inputArray = input
         .replace(/\\\s/, space_replacer)
         .replace(/(['"])[^'"]*(['"])/g, (match) => {
             return match.replace(/['"]+/g, '').replace(/\s/g, space_replacer);
         })
         .split(/\s+/).map(value => value.replace(space_replacer, ' '));
 
-    const [command, ...args] = Cli.parseArgv(dataArray);
-    const params = Cli.parseParams(dataArray);
-
-    if(!command) {
-        processManager.showCurrentPath();
-        processManager.showPrompt();
-        return;
-    }
+    const [command, ...args] = Cli.parseArgv(inputArray);
+    const params = Cli.parseParams(inputArray);
 
     if(command === '.exit') {
         processManager.shutdown();

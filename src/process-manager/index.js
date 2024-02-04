@@ -29,7 +29,7 @@ export default class ProcessManager {
      * @param {string} type 
      */
     message = (message, type) => {
-        process.stdout.write(`\x1b[${this.COLORS.text[type]??this.COLORS.text.default}m${message.trim()}\x1b[0m` + EOL);
+        process.stdout.write(`\x1b[${this.COLORS.text[type]??this.COLORS.text.default}m${message}\x1b[0m` + EOL);
     }
     welcome = () => {
         this.message(`Welcome to the File Manager, ${this.username}!`);
@@ -50,5 +50,8 @@ export default class ProcessManager {
     }
     showPrompt = () => {
         process.stdout.write('\x1b[1m\x1b[92m> \x1b[0m');
+    }
+    back = () => {
+        process.stdout.moveCursor(2, -1);
     }
 }

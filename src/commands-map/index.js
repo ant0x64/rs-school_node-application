@@ -47,7 +47,7 @@ export default class CommandsMap {
             output+=(`\x1b[37m${file_name}\x1b[0m`) + OS.getEOL();
         });
 
-        return output;
+        return output.trim();
     }
     async _cat (path) {
         /** @todo implement it with Process Manager */
@@ -86,28 +86,29 @@ export default class CommandsMap {
         switch(params[0]) {
 
         case 'EOL':
-            return (`EOL is equel to: \x1b[1m${JSON.stringify(OS.getEOL().toString())}\x1b[0m`);
+            return (`EOL is equel to: \x1b[1m${JSON.stringify(OS.getEOL().toString())}\x1b[22m`);
         case 'cpus' : {
             const cpus = OS.getCpus();
-            let output = '';
+            let output = '\x1b[49m';
 
             if(!cpus) {
                 return CommandsMap.throwInvalidOutput();
             }
-            output+=(`Overall amount of CPUS: \x1b[1m${cpus.length}\x1b[0m`) + OS.getEOL();
-            output+=(`Model: \x1b[1m${cpus[0].model}\x1b[0m`) + OS.getEOL();
+            output+=(`Overall amount of CPUS: \x1b[1m${cpus.length}\x1b[22m`) + OS.getEOL();
+            output+=(`Model: \x1b[1m${cpus[0].model}\x1b[22m`) + OS.getEOL();
+  
             cpus.map((cpu, index) => {
-                output+=(`CPU ${(index + 1)} clock rate is: \x1b[1m${cpu.clock}GHz\x1b[0m`) + OS.getEOL();
+                output+=(`CPU ${(index + 1)} clock rate is: \x1b[1m${cpu.clock}GHz\x1b[22m`) + OS.getEOL();
             });
 
-            return output;
+            return output.trim();
         } 
         case 'homedir':
-            return (`Your home dir is: \x1b[1m${OS.getHomedir()}\x1b[0m`);
+            return (`Your home dir is: \x1b[1m${OS.getHomedir()}\x1b[22m`);
         case 'username':
-            return (`Username is: \x1b[1m${OS.getUsername()}\x1b[0m`);
+            return (`Username is: \x1b[1m${OS.getUsername()}\x1b[22m`);
         case 'architecture':
-            return (`Architecture is: \x1b[1m${OS.getArchitecture()}\x1b[0m`);
+            return (`Architecture is: \x1b[1m${OS.getArchitecture()}\x1b[22m`);
         default :
             CommandsMap.throwArgumentsError();
         }
