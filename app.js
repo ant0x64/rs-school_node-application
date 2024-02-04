@@ -2,6 +2,7 @@ import Cli from "./src/cli/index.js";
 import ProcessManager from "./src/process-manager/index.js";
 import OS from "./src/os/index.js";
 import Hash from "./src/hash/index.js";
+import Compressor from "./src/compressor/index.js";
 
 import fileManager from "./src/file-manager/index.js";
 
@@ -119,11 +120,17 @@ class CommandsMap {
         ))}`, 'result');
     }
     async _compress(source, destination) {
-        await fileManager.compress(source, destination);
+        await Compressor.compress(
+            fileManager.getAbsolutePath(source), 
+            fileManager.getAbsolutePath(destination)
+        );
         processManager.success();
     }
     async _decompress(source, destination) {
-        await fileManager.decompress(source, destination);
+        await Compressor.decompress(
+            fileManager.getAbsolutePath(source), 
+            fileManager.getAbsolutePath(destination)
+        );
         processManager.success();
     }
 

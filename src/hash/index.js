@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { createReadStream } from 'fs';
+import { createReadStream } from 'node:fs';
 import { pipeline } from 'node:stream/promises';
 
 export default class Hash {
