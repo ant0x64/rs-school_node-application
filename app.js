@@ -1,20 +1,20 @@
-import Cli from "./src/cli/index.js";
-import ProcessManager from "./src/process-manager/index.js";
-import CommandsMap from "./src/commands-map/index.js";
+import Session from "./src/lib/session.js";
+import CommandParser from "./src/lib/command-parser.js";
+import Application from "./src/application.js";
 
 import process from 'node:process';
 import { homedir } from "node:os";
 
 process.chdir(homedir());
 
-const { username } = Cli.parseParams(process.argv.slice(2));
-const processManager = new ProcessManager(username);
+const { username } = CommandParser.parseParams(process.argv.slice(2));
+const session = new Session(username);
 
-processManager.welcome();
-processManager.showCurrentPath();
-processManager.showPrompt();
+session.welcome();
+session.showCurrentPath();
+session.showPrompt();
 
-const commandsMap = new CommandsMap();
+const application = new Application();
 
 /** @todo implement it as pipeline with transform streams */
 process.stdin.on('data', async (data) => {
@@ -22,8 +22,8 @@ process.stdin.on('data', async (data) => {
     const space_replacer = '\\xa0';
     const input = data.toString().trim();
 
-    if(!input) {
-        processManager.back();
+    if (!input) {
+        session.back();
         return;
     }
 
@@ -34,29 +34,29 @@ process.stdin.on('data', async (data) => {
         })
         .split(/\s+/).map(value => value.replace(space_replacer, ' '));
 
-    const [command, ...args] = Cli.parseArgv(inputArray);
-    const params = Cli.parseParams(inputArray);
+    const [command, ...args] = CommandParser.parseArgv(inputArray);
+    const params = CommandParser.parseParams(inputArray);
 
-    if(command === '.exit') {
-        processManager.shutdown();
+    if (command === '.exit') {
+        session.shutdown();
     }
 
     try {
-        const result = await commandsMap.run(command, args, params);
-        if(result === true) {
-            processManager.success();
+        const result = await application.handleCommand(command, args, params);
+        if (result === true) {
+            session.success();
         } else if (typeof result === 'string') {
-            processManager.message(result, 'result');
+            session.message(result, 'result');
         }
-    } catch(err) {
-        processManager.message(err.message, 'error');
-        processManager.error();
+    } catch (err) {
+        session.message(err.message, 'error');
+        session.error();
     }
-    processManager.showCurrentPath();
-    processManager.showPrompt();
+    session.showCurrentPath();
+    session.showPrompt();
 });
 
 process.on('SIGINT', () => {
-    processManager.message(''); // linebreak
-    processManager.shutdown();
+    session.message(''); // linebreak
+    session.shutdown();
 });

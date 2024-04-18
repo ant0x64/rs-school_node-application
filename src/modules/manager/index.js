@@ -8,7 +8,7 @@ import { pipeline, finished } from 'node:stream/promises';
 import { Stats } from 'node:fs'; // eslint-disable-line no-unused-vars
 import { Writable } from 'node:stream'; // eslint-disable-line no-unused-vars
 
-export default class FileManager {
+export default class Manager {
     /**
      * @type {string}
      */

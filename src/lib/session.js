@@ -2,7 +2,7 @@ import { EOL } from "node:os";
 import process from "node:process";
 
 /** @todo implement it as writable or duplex streams */
-export default class ProcessManager {
+export default class Session {
 
     username = null;
     

@@ -1,15 +1,15 @@
-import OS from "./../os/index.js";
-import Hash from "./../hash/index.js";
-import Compressor from "./../compressor/index.js";
-import FileManager from "./../file-manager/index.js";
+import OS from "./modules/os/index.js";
+import Hash from "./modules/hash/index.js";
+import Compressor from "./modules/compressor/index.js";
+import Manager from "./modules/manager/index.js";
 
-export default class CommandsMap {
+export default class Application {
 
-    /** @type {FileManager} */
-    fileManager = null;
+    /** @type {Manager} */
+    manager = null;
 
     constructor() {
-        this.fileManager = new FileManager;
+        this.manager = new Manager;
     }
     
     static throwArgumentsError(argumentsNeed) {
@@ -29,13 +29,13 @@ export default class CommandsMap {
     }
 
     async _up () {
-        await this.fileManager.up();
+        await this.manager.up();
     }
     async _cd (path) {
-        await this.fileManager.cd(path);
+        await this.manager.cd(path);
     }
     async _ls () {
-        const list = await this.fileManager.ls();
+        const list = await this.manager.ls();
 
         let output = '\x1b[0m';
         output+=(`\x1b[1m\x1b[35mTotal Directories: ${list.dirs.length}\x1b[0m`) + OS.getEOL();
@@ -51,36 +51,36 @@ export default class CommandsMap {
     }
     async _cat (path) {
         /** @todo implement it with Process Manager */
-        await this.fileManager.cat(path, process.stdout);
+        await this.manager.cat(path, process.stdout);
     }
     async _add (name) {
-        await this.fileManager.add(name);
+        await this.manager.add(name);
         return true;
     }
     async _rn (path, new_path) {
-        await this.fileManager.rn(path, new_path); 
+        await this.manager.rn(path, new_path); 
         return true;
     }
     async _rm (path) {
-        await this.fileManager.rm(path);
+        await this.manager.rm(path);
         return true;
     }
     async _cp (file_path, destination_dir) {
-        await this.fileManager.cp(file_path, destination_dir);
+        await this.manager.cp(file_path, destination_dir);
         return true;
     }
     async _mv (file_path, destination_dir) {
-        await this.fileManager.mv(file_path, destination_dir);
+        await this.manager.mv(file_path, destination_dir);
         return true;
     }
     _os (...args) {
         if(!args[0] || !(args[0] instanceof Object)) {
-            return CommandsMap.throwInputError();
+            return Application.throwInputError();
         }
 
         const params = Object.keys(args[0]);
         if(params.length > 1) {
-            return CommandsMap.throwArgumentsError(1);
+            return Application.throwArgumentsError(1);
         }
         
         switch(params[0]) {
@@ -92,7 +92,7 @@ export default class CommandsMap {
             let output = '\x1b[49m';
 
             if(!cpus) {
-                return CommandsMap.throwInvalidOutput();
+                return Application.throwInvalidOutput();
             }
             output+=(`Overall amount of CPUS: \x1b[1m${cpus.length}\x1b[22m`) + OS.getEOL();
             output+=(`Model: \x1b[1m${cpus[0].model}\x1b[22m`) + OS.getEOL();
@@ -110,25 +110,25 @@ export default class CommandsMap {
         case 'architecture':
             return (`Architecture is: \x1b[1m${OS.getArchitecture()}\x1b[22m`);
         default :
-            CommandsMap.throwArgumentsError();
+            Application.throwArgumentsError();
         }
     }
     async _hash(path) { 
         return (`Hash: \x1b[1m${(await Hash.create(
-            this.fileManager.getAbsolutePath(path)
+            this.manager.getAbsolutePath(path)
         ))}\x1b[0m`);
     }
     async _compress(source, destination) {
         await Compressor.compress(
-            this.fileManager.getAbsolutePath(source), 
-            this.fileManager.getAbsolutePath(destination)
+            this.manager.getAbsolutePath(source), 
+            this.manager.getAbsolutePath(destination)
         );
         return true;
     }
     async _decompress(source, destination) {
         await Compressor.decompress(
-            this.fileManager.getAbsolutePath(source), 
-            this.fileManager.getAbsolutePath(destination)
+            this.manager.getAbsolutePath(source), 
+            this.manager.getAbsolutePath(destination)
         );
         return true;
     }
@@ -138,13 +138,13 @@ export default class CommandsMap {
      * @param {[string]} args 
      * @param {{:<string>}} params 
      */
-    async run(command, args, params) {
+    async handleCommand(command, args, params) {
         const fn = this['_' + command];
 
         if(!fn) {
-            CommandsMap.throwInputError();
+            Application.throwInputError();
         } else if (fn.length !== args.length) {
-            CommandsMap.throwArgumentsError(fn.length);
+            Application.throwArgumentsError(fn.length);
         }
         fn.params = params;
 

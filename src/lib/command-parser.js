@@ -1,4 +1,4 @@
-export default class Cli {
+export default class CommandParser {
     
     /**
      * @param {[]} argv 
